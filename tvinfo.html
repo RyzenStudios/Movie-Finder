@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Movie Details</title>
+  <link rel="stylesheet" href="moviestyle.css">
+  <link rel="icon" href="png.ico" type="image/x-icon">
+  <link href="https://fonts.googleapis.com/css2?family=Coda&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    integrity="sha384-wvfXpqpZZVQGK6TAh5D5PvflSF5r3xQXdRTwDZ9ZqFG6W5NHTiRBffWgHQ2&" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    integrity="sha384-LCQOdrG7bAYxAaaAruOCZfrjNjZ5fjwDvGg9x2bCG9TxUI1dR5un2hLU2gJkMU7T" crossorigin="anonymous">
+
+</head>
+<div id="loading-screen">
+  <div id="loading-spinner"></div>
+</div>
+
+<body>
+  <header>
+    <nav class="navbar">
+      <a href="index.html">
+        <img src="logo.png" alt="Logo" class="logo">
+      </a>
+
+      <div class="navbar-tabs">
+        <button id="home-tab" class="nav-tab active"><i class="fas fa-home"></i> HOME</button>
+        <button id="favorites-button" class="nav-tab"><i class="fas fa-heart"></i> FAVOURITE MOVIES</button>
+        <button id="fav-tv-button" class="nav-tab"><i class="fas fa-tv"></i> FAVOURITE SHOWS</button>
+        <button id="top-movies-tab" class="nav-tab"><i class="fas fa-film"></i> TOP MOVIES</button>
+        <button id="top-shows-tab" class="nav-tab"><i class="fas fa-tv"></i> TOP TV SHOWS</button>
+      </div>
+
+
+    </nav>
+  </header>
+
+  <main id="movie-details-container" class="container">
+    <div class="movie-details-card">
+      <div class="poster-container">
+        <img id="movie-poster" src="" alt="Movie Poster">
+
+
+      </div>
+      <div class="movie-info">
+        <h2 id="movie-title"></h2>
+        <p id="movie-overview"> </p>
+        <p id="movie-release-date"></p>
+        <p id="movie-rating"></p>
+        <h3>Cast</h3>
+        <ul id="cast-list"></ul>
+        <ul id="episode-list"></ul>
+        <button id="favorite-button" class="favorite-button"><i class="far fa-heart"></i></button>
+
+      </div>
+
+
+    </div>
+    <div id="trailer-container" class="trailer-container">
+      <div id="trailer-wrapper"></div>
+    </div>
+
+    <div class="comment-section">
+      <h3>Comments</h3>
+      <div class="comments-container" id="comments-container"></div>
+      <form id="comment-form">
+        <input type="text" id="name-input" placeholder="Your Name" required>
+        <textarea id="comment-input" placeholder="Add a comment" required></textarea>
+        <button type="submit">Submit</button>
+      </form>
+      <div class="related-movies">
+        <h3>Related Shows</h3>
+        <div id="related-movies-container" class="related-movies-container"></div>
+      </div>
+  </main>
+
+  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
+
+  <script>
+    function showLoadingScreen() {
+      const loadingScreen = document.getElementById('loading-screen');
+      loadingScreen.style.display = 'flex';
+    }
+
+    function hideLoadingScreen() {
+      const loadingScreen = document.getElementById('loading-screen');
+      loadingScreen.style.display = 'none';
+    }
+
+    function simulateLoading() {
+      showLoadingScreen();
+
+      setTimeout(() => {
+        hideLoadingScreen();
+      }, 500);
+    }
+
+    window.addEventListener('load', simulateLoading);
+
+
+    const commentForm = document.getElementById('comment-form');
+    const nameInput = document.getElementById('name-input');
+    const commentInput = document.getElementById('comment-input');
+    const commentsContainer = document.getElementById('comments-container');
+
+    commentForm.addEventListener('submit', handleCommentSubmission);
+
+    function handleCommentSubmission(event) {
+      event.preventDefault();
+
+      const name = nameInput.value.trim();
+      const comment = commentInput.value.trim();
+
+      if (name === '' || comment === '') {
+        return;
+      }
+
+      const timestamp = new Date().toLocaleString();
+      const commentElement = createCommentElement(name, comment, timestamp);
+      commentsContainer.appendChild(commentElement);
+
+      nameInput.value = '';
+      commentInput.value = '';
+    }
+
+    const profilePicUrl = [
+      'https://soccerpointeclaire.com/wp-content/uploads/2021/06/default-profile-pic-e1513291410505.jpg',
+      'https://i.pinimg.com/474x/f8/3c/cc/f83ccca88e2a190c2736f0f4fab02520.jpg',
+      'https://i.pinimg.com/236x/a0/f1/fc/a0f1fc7cbbb9f9637d90cd90170cbb57.jpg',
+      'https://i.pinimg.com/originals/46/72/f8/4672f876389036583190d93a71aa6cb2.jpg',
+      'https://i.pinimg.com/474x/f1/da/a7/f1daa70c9e3343cebd66ac2342d5be3f.jpg',
+      'https://i.pinimg.com/564x/c0/fc/f1/c0fcf164efd9a75a5f7d8065d4365451.jpg',
+      'https://i.pinimg.com/originals/bd/70/22/bd702201a2b6d8960734f60f34a22754.jpg',
+      'https://64.media.tumblr.com/95b73026318bb9174fe3528d2a3f868d/f8d3140061ff47ac-71/s400x600/1fd8a90993dab6281c333f0a061430ae618011f2.jpg',
+      'https://www.heurekalabs.org/content/images/2022/03/originalApe6808-1.png',
+      'https://d9jhi50qo719s.cloudfront.net/1e8f/samples/1owu_800.png?221105025618',
+    ];
+
+    function getRandomProfilePicUrl() {
+      const randomIndex = Math.floor(Math.random() * profilePicUrl.length);
+      return profilePicUrl[randomIndex];
+    }
+
+    function createCommentElement(name, comment, timestamp) {
+
+
+
+      const commentContainer = document.createElement('div');
+      commentContainer.classList.add('comment');
+
+      const profilePicElement = document.createElement('img');
+      profilePicElement.classList.add('profile-pic');
+      profilePicElement.src = getRandomProfilePicUrl();
+
+      const commentContent = document.createElement('div');
+      commentContent.classList.add('comment-content');
+
+      const authorElement = document.createElement('div');
+      authorElement.classList.add('author');
+      authorElement.textContent = name;
+
+      const commentTextElement = document.createElement('div');
+      commentTextElement.classList.add('comment-text');
+      commentTextElement.textContent = comment;
+
+      const timestampElement = document.createElement('div');
+      timestampElement.classList.add('timestamp');
+      timestampElement.textContent = timestamp;
+
+      commentContent.appendChild(authorElement);
+      commentContent.appendChild(commentTextElement);
+      commentContent.appendChild(timestampElement);
+
+      commentContainer.appendChild(profilePicElement);
+      commentContainer.appendChild(commentContent);
+
+      const deleteButton = document.createElement('button');
+      deleteButton.classList.add('delete-button');
+      deleteButton.innerHTML = '&#10006;';
+      deleteButton.addEventListener('click', () => {
+        deleteComment(name, timestamp);
+        commentContainer.remove();
+      });
+
+      commentContainer.appendChild(deleteButton);
+
+
+      return commentContainer;
+    }
+
+    function deleteComment(name, timestamp) {
+      const existingComments = JSON.parse(localStorage.getItem('comments')) || [];
+      const updatedComments = existingComments.filter(
+        (comment) => comment.name !== name || comment.timestamp !== timestamp
+      );
+      localStorage.setItem('comments', JSON.stringify(updatedComments));
+    }
+
+    function handleCommentSubmission(event) {
+      event.preventDefault();
+
+      const name = nameInput.value.trim();
+      const comment = commentInput.value.trim();
+
+      if (name === '' || comment === '') {
+        return;
+      }
+
+      const timestamp = new Date().toLocaleString();
+      const commentElement = createCommentElement(name, comment, timestamp);
+      commentsContainer.appendChild(commentElement);
+
+      saveCommentToLocalStorage(name, comment, timestamp);
+
+      nameInput.value = '';
+      commentInput.value = '';
+    }
+
+    function saveCommentToLocalStorage(name, comment, timestamp) {
+      const existingComments = JSON.parse(localStorage.getItem('comments')) || [];
+      existingComments.push({ name, comment, timestamp });
+      localStorage.setItem('comments', JSON.stringify(existingComments));
+    }
+
+    function loadCommentsFromLocalStorage() {
+      const existingComments = JSON.parse(localStorage.getItem('comments')) || [];
+
+      existingComments.forEach(({ name, comment, timestamp }) => {
+        const commentElement = createCommentElement(name, comment, timestamp);
+        commentsContainer.appendChild(commentElement);
+      });
+    }
+
+    window.addEventListener('load', loadCommentsFromLocalStorage);
+
+
+    async function fetchMovieDetails(movieId) {
+      const API_KEY = 'a566fb0fc4bcb2f908b405cf49a573b7';
+      const url = `https://api.themoviedb.org/3/tv/${movieId}?api_key=${API_KEY}`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (response.ok) {
+          return data;
+        } else {
+          throw new Error(data.status_message || 'Failed to fetch movie details');
+        }
+      } catch (error) {
+        console.error(error);
+        throw error;
+      }
+    }
+
+    async function fetchMovieCast(movieId) {
+      const API_KEY = 'a566fb0fc4bcb2f908b405cf49a573b7';
+      const url = `https://api.themoviedb.org/3/tv/${movieId}/credits?api_key=${API_KEY}`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (response.ok) {
+          return data.cast;
+        } else {
+          throw new Error(data.status_message || 'Failed to fetch the movie cast');
+        }
+      } catch (error) {
+        console.error(error);
+        throw error;
+      }
+    }
+
+    async function fetchOfficialTrailer(movieId) {
+      const API_KEY = 'a566fb0fc4bcb2f908b405cf49a573b7';
+      const url = `https://api.themoviedb.org/3/tv/${movieId}/videos?api_key=${API_KEY}`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (response.ok) {
+          const trailer = data.results.find(trailer => trailer.type === 'Trailer' && trailer.site === 'YouTube');
+          return trailer;
+        } else {
+          throw new Error(data.status_message || 'Failed to fetch the official trailer');
+        }
+      } catch (error) {
+        console.error(error);
+        throw error;
+      }
+    }
+
+    function displayMovieDetails(movie) {
+      const moviePoster = document.getElementById('movie-poster');
+      const movieTitle = document.getElementById('movie-title');
+      const movieOverview = document.getElementById('movie-overview');
+      const movieReleaseDate = document.getElementById('movie-release-date');
+      const movieRating = document.getElementById('movie-rating');
+      const movieId = new URLSearchParams(window.location.search).get('movieId');
+      const imdbID = movieId;
+
+      moviePoster.src = `https://image.tmdb.org/t/p/w500/${movie.poster_path}`;
+      movieTitle.textContent = movie.name;
+      movieOverview.textContent = movie.overview;
+      movieReleaseDate.textContent = `Air Date: ${movie.first_air_date}`;
+      movieRating.textContent = `Rating: ${movie.vote_average.toFixed(1)}`;
+
+
+
+    }
+
+
+
+    function displayEpisodes(movie) {
+      const episodeListContainer = document.getElementById('episode-list');
+
+      episodeListContainer.innerHTML = '';
+      const lastEpisode = movie.last_episode_to_air;
+      const lastEpisodeTitle = document.createElement('h4');
+      lastEpisodeTitle.textContent = 'Last Episode to Air';
+      const episodeName = document.createElement('p');
+      episodeName.textContent = `Name: ${lastEpisode.name}`;
+      episodeName.style.fontSize = '16px';
+
+      const airDate = document.createElement('p');
+      airDate.textContent = `Air Date: ${lastEpisode.air_date}`;
+      airDate.style.fontSize = '16px';
+
+      episodeListContainer.appendChild(lastEpisodeTitle);
+      episodeListContainer.appendChild(episodeName);
+      episodeListContainer.appendChild(airDate);
+
+      const totalSeasons = document.createElement('p');
+      totalSeasons.textContent = `Total Seasons: ${movie.number_of_seasons}`;
+      totalSeasons.style.fontSize = '14px';
+
+      const totalEpisodes = document.createElement('p');
+      totalEpisodes.textContent = `Total Episodes: ${movie.number_of_episodes}`;
+      totalEpisodes.style.fontSize = '14px';
+
+      episodeListContainer.appendChild(totalSeasons);
+      episodeListContainer.appendChild(totalEpisodes);
+    }
+
+
+
+
+    async function displayCastList(cast) {
+      const castList = document.getElementById('cast-list');
+      const castNames = cast.slice(0, 25).map(actor => actor.name).join(', ');
+      castList.textContent = castNames;
+    }
+
+
+    async function displayOfficialTrailer(movieId) {
+      const trailerContainer = document.getElementById('trailer-container');
+
+      try {
+        const trailer = await fetchOfficialTrailer(movieId);
+
+        if (trailer) {
+          const trailerHTML = `
+            <h3>Official Trailer</h3>
+            <div class="trailer-wrapper">
+              <iframe class="trailer-iframe" width="640" height="380" src="https://www.youtube.com/embed/${trailer.key}" frameborder="0" allowfullscreen></iframe>
+            </div>
+          `;
+
+          trailerContainer.innerHTML = trailerHTML;
+        } else {
+          trailerContainer.innerHTML = `<h3>No trailer found</h3>`;
+        }
+      } catch (error) {
+        console.error(error);
+        trailerContainer.innerHTML = `<p>Error: Failed to fetch the official trailer</p>`;
+      }
+    }
+
+
+
+
+
+    function isMovieInFavorites(movie) {
+      const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+      return favorites.some((fav) => fav.id === movie.id);
+    }
+
+    function toggleFavorite(movie, favoriteButton) {
+      const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+      const isFavorite = isMovieInFavorites(movie);
+
+      if (isFavorite) {
+        favoriteButton.classList.remove('favorited');
+        favoriteButton.innerHTML = '<i class="far fa-heart"></i>';
+        removeMovieFromFavorites(movie);
+      } else {
+        favoriteButton.classList.add('favorited');
+        favoriteButton.innerHTML = '<i class="fas fa-heart"></i>';
+        addMovieToFavorites(movie);
+      }
+    }
+
+    function addMovieToFavorites(movie) {
+      const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+      favorites.push(movie);
+      localStorage.setItem('favorites', JSON.stringify(favorites));
+    }
+
+    function removeMovieFromFavorites(movie) {
+      let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+      favorites = favorites.filter((fav) => fav.id !== movie.id);
+      localStorage.setItem('favorites', JSON.stringify(favorites));
+    }
+
+    function handleFavoriteButtonClick() {
+      const movieId = new URLSearchParams(window.location.search).get('movieId');
+      const favoriteButton = document.getElementById('favorite-button');
+
+      fetchMovieDetails(movieId)
+        .then((movie) => {
+          toggleFavorite(movie, favoriteButton);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    }
+    async function fetchRelatedMovies(movieId) {
+      const API_KEY = 'a566fb0fc4bcb2f908b405cf49a573b7';
+      const url = `https://api.themoviedb.org/3/tv/${movieId}/similar?api_key=${API_KEY}`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (response.ok) {
+          return data.results;
+        } else {
+          throw new Error(data.status_message || 'Failed to fetch related movies');
+        }
+      } catch (error) {
+        console.error(error);
+        throw error;
+      }
+    }
+    function displayRelatedMovies(relatedMovies) {
+      const relatedMoviesContainer = document.getElementById('related-movies-container');
+      relatedMoviesContainer.innerHTML = '';
+
+      relatedMovies.forEach((movie) => {
+        const movieElement = document.createElement('div');
+        movieElement.classList.add('related-movie-card');
+
+        movieElement.innerHTML = `
+    <img src="${movie.poster_path ? `https://image.tmdb.org/t/p/w500/${movie.poster_path}` : 'https://static.displate.com/857x1200/displate/2022-04-15/7422bfe15b3ea7b5933dffd896e9c7f9_46003a1b7353dc7b5a02949bd074432a.jpg'}" alt="${movie.title}">
+      <h4>${movie.name}</h4>
+    `;
+
+        movieElement.addEventListener('click', () => {
+          if (movie.title) {
+            window.location.href = `movie.html?movieId=${movie.id}`;
+          } else if (movie.name) {
+            window.location.href = `tvinfo.html?movieId=${movie.id}`;
+          }
+        });
+
+        relatedMoviesContainer.appendChild(movieElement);
+      });
+    }
+
+
+    async function init() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const movieId = urlParams.get('movieId');
+
+      try {
+        const movie = await fetchMovieDetails(movieId);
+        const cast = await fetchMovieCast(movieId);
+        const relatedMovies = await fetchRelatedMovies(movieId);
+        const episodes = await fetchMovieDetails(movieId);
+
+
+        displayMovieDetails(movie);
+        displayCastList(cast);
+        displayRelatedMovies(relatedMovies);
+        displayEpisodes(episodes);
+        await displayOfficialTrailer(movieId);
+
+        const favoriteButton = document.getElementById('favorite-button');
+        if (isMovieInFavorites(movie)) {
+          favoriteButton.classList.add('favorited');
+          favoriteButton.innerHTML = '<i class="fas fa-heart"></i>';
+        }
+
+
+        favoriteButton.addEventListener('click', handleFavoriteButtonClick);
+      } catch (error) {
+        console.error(error);
+        const movieDetailsContainer = document.getElementById('movie-details-container');
+        movieDetailsContainer.innerHTML = `<p>Error: ${error.message}</p>`;
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
+
+
+
+    const homeButton = document.getElementById('home-tab');
+    homeButton.addEventListener('click', navigateToHome);
+
+    function navigateToHome() {
+      window.location.href = 'index.html';
+    }
+
+    const favoritesMovieButton = document.getElementById('favorites-button');
+    favoritesMovieButton.addEventListener('click', navigateToFavorites);
+
+    function navigateToFavorites() {
+      window.location.href = 'favorites.html';
+    }
+
+
+    const favTvButton = document.getElementById('fav-tv-button');
+    favTvButton.addEventListener('click', navigateToFavoriteTv);
+
+    function navigateToFavoriteTv() {
+      window.location.href = 'favoritestv.html';
+    }
+
+    const topMovie = document.getElementById('top-movies-tab');
+    topMovie.addEventListener('click', NavtoTop);
+
+    function NavtoTop() {
+      window.location.href = 'top.html';
+    }
+
+    const TopShows = document.getElementById('top-shows-tab');
+    TopShows.addEventListener('click', navigateToTopShows);
+
+    function navigateToTopShows() {
+      window.location.href = 'tvshows.html';
+    }
+
+
+
+  </script>
+</body>
+<footer>
+  <div class="footer-content">
+    <div class="contact-info">
+      <p>Navigate the Cinematic Universe with Ease.
+      </p>
+    </div>
+
+  </div>
+
+  <div class="copyright">
+    <p>&copy; 2024 Ryzen Movie Finder. All rights reserved.
+    </p>
+  </div>
+</footer>
+
+</html>

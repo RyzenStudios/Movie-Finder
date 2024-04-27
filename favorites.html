@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Favorite Movies</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="png.ico" type="image/x-icon">
+  <link href="https://fonts.googleapis.com/css2?family=Coda&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    integrity="sha384-wvfXpqpZZVQGK6TAh5D5PvflSF5r3xQXdRTwDZ9ZqFG6W5NHTiRBffWgHQ2&" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    integrity="sha384-LCQOdrG7bAYxAaaAruOCZfrjNjZ5fjwDvGg9x2bCG9TxUI1dR5un2hLU2gJkMU7T" crossorigin="anonymous">
+
+</head>
+<div id="loading-screen">
+  <div id="loading-spinner"></div>
+</div>
+
+<body>
+  <nav class="navbar">
+    <a href="index.html">
+      <img src="logo.png" alt="Logo" class="logo">
+    </a>
+
+    <div class="navbar-tabs">
+      <button id="home-tab" class="nav-tab active"><i class="fas fa-home"></i>HOME</button>
+      <button id="favourite-button" class="nav-tab"><i class="fas fa-heart"></i>FAVOURITE MOVIES</button>
+      <button id="fav-tv-button" class="nav-tab"><i class="fas fa-heart"></i>FAVOURITE SHOWS</button>
+      <button id="top-movies-tab" class="nav-tab"><i class="fas fa-film"></i>TOP MOVIES</button>
+      <button id="top-shows-tab" class="nav-tab"><i class="fas fa-list"></i>TOP TV SHOWS</button>
+    </div>
+
+
+  </nav>
+
+
+  </header>
+  <h1>Favourite Movies</h1>
+
+  <main id="movies-container"></main>
+
+  <div class="page-selector">
+    <button id="prev-button" class="page-button">Prev</button>
+    <span id="page-number"></span>
+    <button id="next-button" class="page-button">Next</button>
+  </div>
+  <html>
+
+
+  <body>
+    <header>
+    </header>
+    <main>
+    </main>
+  </body>
+
+  </html>
+
+  <script>
+    function showLoadingScreen() {
+      const loadingScreen = document.getElementById('loading-screen');
+      loadingScreen.style.display = 'flex';
+    }
+
+    function hideLoadingScreen() {
+      const loadingScreen = document.getElementById('loading-screen');
+      loadingScreen.style.display = 'none';
+    }
+
+    function simulateLoading() {
+      showLoadingScreen();
+
+      setTimeout(() => {
+        hideLoadingScreen();
+      }, 500);
+    }
+
+    window.addEventListener('load', simulateLoading);
+
+    const API_KEY = 'a566fb0fc4bcb2f908b405cf49a573b7';
+
+    async function fetchMoviesByIds(movieIds) {
+      const promises = movieIds.map(async (movieId) => {
+        const url = `https://api.themoviedb.org/3/movie/${movieId}?api_key=${API_KEY}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        return data;
+      });
+
+      try {
+        const movieData = await Promise.all(promises);
+        const movies = movieData.filter((movie) => movie && movie.title && !movie.first_air_date);
+        return movies;
+      } catch (error) {
+        console.error(error);
+        throw error;
+      }
+    }
+
+    function displayMovies(movies) {
+      const moviesContainer = document.getElementById('movies-container');
+      moviesContainer.innerHTML = '';
+
+      movies.forEach(movie => {
+        if (movie !== null) {
+          const movieElement = document.createElement('div');
+          movieElement.classList.add('movie-card');
+
+          movieElement.innerHTML = `
+        <h2>${movie.title}</h2>
+        <img src="https://image.tmdb.org/t/p/w500/${movie.poster_path}" alt="${movie.title}">
+        <p>${movie.overview}</p>
+        <p>Release Date: ${movie.release_date}</p>
+        <p>Rating: ${movie.vote_average.toFixed(1)}</p>
+        <button class="favourite-button">Remove from Favorites</button>
+      `;
+
+          movieElement.addEventListener('click', () => {
+            window.location.href = `movie.html?movieId=${movie.id}`;
+          });
+
+          const favoriteButton = movieElement.querySelector('.favourite-button');
+          favoriteButton.addEventListener('click', (event) => {
+            event.stopPropagation();
+            removeFromFavorites(movie.id);
+          });
+
+          moviesContainer.appendChild(movieElement);
+        }
+      });
+    }
+
+
+    function handlePrevButtonClick() {
+      const currentPage = getCurrentPageFromURL();
+
+      if (currentPage > 1) {
+        navigateToPage(currentPage - 1);
+      }
+    }
+
+    function handleNextButtonClick() {
+      const currentPage = getCurrentPageFromURL();
+
+
+      if (currentPage < maxNumberOfPages) {
+        navigateToPage(currentPage + 1);
+      }
+    }
+
+    function updatePageNumber(currentPage, maxNumberOfPages) {
+      const pageNumberElement = document.getElementById('page-number');
+      pageNumberElement.textContent = `Page ${currentPage} of ${maxNumberOfPages}`;
+    }
+
+
+    function getCurrentPageFromURL() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return parseInt(urlParams.get('page')) || 1;
+    }
+
+    function navigateToPage(page) {
+      const url = `favorites.html?page=${page}`;
+      window.location.href = url;
+    }
+
+    async function searchMovies(query) {
+      const url = `https://api.themoviedb.org/3/search/movie?api_key=${API_KEY}&query=${query}`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (response.ok) {
+          return data.results;
+        } else {
+          throw new Error(data.status_message || 'Failed to search movies');
+        }
+      } catch (error) {
+        console.error(error);
+        throw error;
+      }
+    }
+
+    function removeFromFavorites(movieId) {
+      const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+      const updatedFavorites = favorites.filter((fav) => fav.id !== movieId);
+      localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+
+      location.reload();
+    }
+
+
+
+    async function init() {
+      const currentPage = getCurrentPageFromURL();
+      const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+      let moviesPerPage = 18;
+
+      const moviesContainer = document.getElementById('movies-container');
+
+      const maxNumberOfPages = Math.ceil(favorites.length / moviesPerPage);
+
+      try {
+        const start = (currentPage - 1) * moviesPerPage;
+        const end = start + moviesPerPage;
+
+        const movieIds = favorites.slice(start, Math.min(end, favorites.length)).map((movie) => movie.id);
+        const movies = await fetchMoviesByIds(movieIds);
+
+        if (movies.length === 0) {
+          moviesContainer.innerHTML = '<p>No Movies Favourited</p>';
+        } else {
+          displayMovies(movies);
+          updatePageNumber(currentPage, maxNumberOfPages);
+        }
+
+
+        const prevButton = document.getElementById('prev-button');
+        prevButton.addEventListener('click', handlePrevButtonClick);
+
+        const nextButton = document.getElementById('next-button');
+        nextButton.addEventListener('click', handleNextButtonClick);
+
+        function handlePrevButtonClick() {
+          if (currentPage > 1) {
+            navigateToPage(currentPage - 1);
+          }
+        }
+
+        function handleNextButtonClick() {
+          if (currentPage < maxNumberOfPages) {
+            navigateToPage(currentPage + 1);
+          }
+        }
+      } catch (error) {
+        console.error(error);
+
+        const moviesContainer = document.getElementById('movies-container');
+        moviesContainer.innerHTML = `<p>Error: ${error.message}</p>`;
+      }
+    }
+
+
+
+    window.addEventListener('load', init);
+
+
+    const homeButton = document.getElementById('home-tab');
+    homeButton.addEventListener('click', navigateToHome);
+
+    function navigateToHome() {
+      window.location.href = 'index.html';
+    }
+
+    const favoritesMovieButton = document.getElementById('favourite-button');
+    favoritesMovieButton.addEventListener('click', navigateToFavorites);
+
+    function navigateToFavorites() {
+      window.location.href = 'favorites.html';
+    }
+
+
+    const favTvButton = document.getElementById('fav-tv-button');
+    favTvButton.addEventListener('click', navigateToFavoriteTv);
+
+    function navigateToFavoriteTv() {
+      window.location.href = 'favoritestv.html';
+    }
+
+    const topMovie = document.getElementById('top-movies-tab');
+    topMovie.addEventListener('click', NavtoTop);
+
+    function NavtoTop() {
+      window.location.href = 'top.html';
+    }
+
+    const TopShows = document.getElementById('top-shows-tab');
+    TopShows.addEventListener('click', navigateToTopShows);
+
+    function navigateToTopShows() {
+      window.location.href = 'tvshows.html';
+    }
+
+
+
+    const searchButton = document.getElementById('search-button');
+    searchButton.addEventListener('click', async () => {
+      const searchInput = document.getElementById('search-input');
+      const query = searchInput.value;
+
+      try {
+        const movies = await searchMovies(query);
+        displayMovies(movies);
+      } catch (error) {
+        console.error(error);
+
+        const moviesContainer = document.getElementById('movies-container');
+        moviesContainer.innerHTML = `<p>Error: ${error.message}</p>`;
+      }
+    });
+
+    const prevButton = document.getElementById('prev-button');
+    prevButton.addEventListener('click', handlePrevButtonClick);
+
+    const nextButton = document.getElementById('next-button');
+    nextButton.addEventListener('click', handleNextButtonClick);
+  </script>
+
+
+</body>
+
+</html>
+<footer>
+  <div class="footer-content">
+    <div class="contact-info">
+      <p>Free movies online, here you can watch movies online in high quality for free without annoying advertising</p>
+    </div>
+
+  </div>
+
+  <div class="copyright">
+    <p>&copy; 2024 Ryzen Movie Haven. All rights reserved.</p>
+  </div>
+</footer>
